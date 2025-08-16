@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface SimulationChoice {
   label: string;
@@ -9,6 +9,7 @@ export interface SimulationInput {
   label: string;
   type: 'number';
   key: string;
+  relevantChoice?: string; // Only show this input if the choice's value matches
 }
 
 export interface SimulationScenario {
@@ -54,7 +55,11 @@ const themeClasses = {
 };
 
 const SimulationScreen: React.FC<SimulationScreenProps> = ({ scenario, onBack }) => {
-    const [values, setValues] = useState<{ [key: string]: string | number }>(() => {
+    const [values, setValues] = useState<{ [key: string]: string | number }>({});
+    const [result, setResult] = useState<React.ReactNode | null>(null);
+
+    // Effect to reset values and result when scenario changes
+    useEffect(() => {
         const initial: { [key: string]: string | number } = {};
         if (scenario.choices) {
             initial[scenario.choices.key] = scenario.choices.options[0].value;
@@ -62,9 +67,10 @@ const SimulationScreen: React.FC<SimulationScreenProps> = ({ scenario, onBack })
         scenario.inputs.forEach(input => {
             initial[input.key] = '';
         });
-        return initial;
-    });
-    const [result, setResult] = useState<React.ReactNode | null>(null);
+        setValues(initial);
+        setResult(null);
+    }, [scenario]);
+
 
     const handleValueChange = (key: string, value: string | number) => {
         const inputConfig = scenario.inputs.find(i => i.key === key);
@@ -74,6 +80,19 @@ const SimulationScreen: React.FC<SimulationScreenProps> = ({ scenario, onBack })
             setValues(prev => ({ ...prev, [key]: formattedValue }));
         } else {
              setValues(prev => ({ ...prev, [key]: value }));
+        }
+
+        // If a choice is changed, clear old inputs that are no longer relevant
+        if (scenario.choices && key === scenario.choices.key) {
+            setResult(null); // Clear result when choice changes
+            const newValues = { ...values, [key]: value };
+            scenario.inputs.forEach(input => {
+                const choiceIsRelevant = !input.relevantChoice || input.relevantChoice === value;
+                if (!choiceIsRelevant) {
+                     newValues[input.key] = ''; // Clear it
+                }
+            });
+            setValues(newValues);
         }
     };
 
@@ -89,6 +108,11 @@ const SimulationScreen: React.FC<SimulationScreenProps> = ({ scenario, onBack })
     };
     
     const currentTheme = themeClasses[scenario.themeColor];
+
+    const currentChoiceValue = scenario.choices ? values[scenario.choices.key] : null;
+    const relevantInputs = scenario.inputs.filter(input => 
+        !input.relevantChoice || input.relevantChoice === currentChoiceValue
+    );
 
     return (
         <div className="p-6 md:p-8 bg-white rounded-2xl shadow-xl w-full animate-fade-in">
@@ -119,14 +143,14 @@ const SimulationScreen: React.FC<SimulationScreenProps> = ({ scenario, onBack })
                         </div>
                     )}
 
-                    {scenario.inputs.map(input => (
-                        <div key={input.key}>
+                    {relevantInputs.map(input => (
+                        <div key={input.key} className="animate-fade-in-fast">
                             <label htmlFor={input.key} className="block text-sm font-medium text-slate-700 mb-1">{input.label}</label>
                             <input
                                 id={input.key}
                                 type="text"
                                 inputMode="numeric"
-                                value={values[input.key]}
+                                value={values[input.key] || ''}
                                 onChange={(e) => handleValueChange(input.key, e.target.value)}
                                 required
                                 className={`w-full p-2 border border-slate-300 rounded-md shadow-sm ${currentTheme.ring}`}
@@ -140,7 +164,7 @@ const SimulationScreen: React.FC<SimulationScreenProps> = ({ scenario, onBack })
                     </button>
                 </form>
 
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 min-h-[200px]">
                     {result ? (
                          <div className="animate-fade-in-fast">{result}</div>
                     ) : (

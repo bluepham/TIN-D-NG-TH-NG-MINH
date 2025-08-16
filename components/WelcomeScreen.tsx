@@ -13,8 +13,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-800 mb-4">
                 Trải nghiệm Tín dụng Thông minh
             </h1>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-8">
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-4">
                 Chào mừng bạn đến với mô phỏng về Dịch vụ Tín dụng! Hãy cùng tìm hiểu về cách hoạt động của các khoản vay, trách nhiệm tài chính và cách đưa ra quyết định thông minh để bảo vệ bản thân.
+            </p>
+            <p className="text-sm text-slate-500 italic mb-8">
+                Nội dung được thiết kế bởi Cô Nguyễn Thị Nhi, giáo viên môn Giáo dục Kinh tế và Pháp luật.
             </p>
             <button
                 onClick={onStart}

@@ -15,6 +15,5 @@ export interface GameCard {
   matchId: number;
   type: 'term' | 'example';
   content: string;
-  isFlipped: boolean;
   isMatched: boolean;
 }
